@@ -9,7 +9,7 @@ import AssessmentTwoToneIcon from '@mui/icons-material/AssessmentTwoTone';
 import CampaignTwoToneIcon from '@mui/icons-material/CampaignTwoTone';
 import InsightsTwoToneIcon from '@mui/icons-material/InsightsTwoTone';
 import CalendarMonthTwoToneIcon from '@mui/icons-material/CalendarMonthTwoTone';
-import AccessTimeTwoToneIcon from '@mui/icons-material/AccessTimeTwoTone'; // <--- New Icon
+import AccessTimeTwoToneIcon from '@mui/icons-material/AccessTimeTwoTone';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 
@@ -73,13 +73,12 @@ export default function Dashboard() {
       path: "/calendar", 
       color: "#EC4899" 
     },
-    // --- NEW TIME TABLE ITEM ---
     { 
       title: "Time Table", 
       subtitle: "Weekly Class Schedule", 
       icon: <AccessTimeTwoToneIcon fontSize="large" />, 
       path: "/timetable", 
-      color: "#F43F5E" // Rose Color
+      color: "#F43F5E" 
     },
   ];
 
@@ -87,9 +86,8 @@ export default function Dashboard() {
     <Box sx={{ 
       minHeight: "100vh", 
       position: "relative",
-      overflow: "hidden",
+      overflow: "hidden", // Prevents scrollbars from background blur
       bgcolor: "#fdfdfd",
-      // Modern Mesh Gradient Background
       "&::before": {
         content: '""',
         position: "absolute",
@@ -117,7 +115,7 @@ export default function Dashboard() {
     }}>
       <Navbar />
       
-      <Container maxWidth="lg" sx={{ py: { xs: 6, md: 12 }, position: "relative", zIndex: 1 }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 6, md: 10 }, position: "relative", zIndex: 1 }}>
         
         {/* Header Section */}
         <Box sx={{ mb: 8, textAlign: 'center' }}>
@@ -148,30 +146,41 @@ export default function Dashboard() {
 
         {/* Dashboard Grid */}
         <motion.div variants={containerVariants} initial="hidden" animate="visible">
-          <Grid container spacing={4}>
+          {/* Changed spacing to 3 for tighter grid, enabled stretch alignment */}
+          <Grid container spacing={3} alignItems="stretch">
             {menuItems.map((item) => (
-              // Changed grid logic to md={4} to create a perfect 3x2 grid for 6 items
-              <Grid item xs={12} sm={6} md={4} key={item.title}>
-                <motion.div variants={cardVariants} whileHover="hover" whileTap={{ scale: 0.97 }} style={{ height: "100%" }}>
+              // SYSTEMATIC FIX: 
+              // xs=12 (1 per row on mobile)
+              // sm=6 (2 per row on tablet)
+              // md=4 (3 per row on desktop) -> Creates perfect 3x2 grid for 6 items
+              <Grid item xs={12} sm={6} md={4} key={item.title} sx={{ display: 'flex' }}>
+                <motion.div 
+                    variants={cardVariants} 
+                    whileHover="hover" 
+                    whileTap={{ scale: 0.97 }} 
+                    style={{ width: "100%", display: "flex" }} // Ensure motion div takes full width/flex
+                >
                   <Card
                     onClick={() => navigate(item.path)}
                     sx={{
                       p: 4,
-                      height: "100%",
+                      width: "100%",
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
                       cursor: "pointer",
                       borderRadius: 6,
                       border: "1px solid",
                       borderColor: alpha(item.color, 0.1),
-                      background: "rgba(255, 255, 255, 0.7)",
+                      background: "rgba(255, 255, 255, 0.8)", // Slightly more opaque to prevent bleed
                       backdropFilter: "blur(12px)",
                       boxShadow: `0 4px 20px -5px ${alpha("#000", 0.05)}`,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
                       transition: "all 0.3s ease",
+                      minHeight: "280px", // Enforce a minimum height for uniformity
                       "&:hover": {
                         boxShadow: `0 25px 50px -12px ${alpha(item.color, 0.25)}`,
                         borderColor: alpha(item.color, 0.3),
+                        transform: "translateY(-5px)" // CSS hover fallback
                       },
                     }}
                   >
