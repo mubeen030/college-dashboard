@@ -264,7 +264,7 @@ export default function AcademicCalendar() {
                   onClick={openAddModal}
                   sx={{ borderRadius: "20px", textTransform: "none", boxShadow: 'none' }}
                 >
-                  Add
+                  Add Event
                 </Button>
               </Stack>
 

@@ -3,24 +3,47 @@ import Navbar from "../components/Navbar";
 import { 
   Typography, Select, MenuItem, TextField, Table, TableBody, 
   TableCell, TableHead, TableRow, Container, Paper, Box, Button, Chip,
-  FormControl, InputLabel, IconButton, Tooltip, Stack
+  FormControl, InputLabel, Stack 
 } from "@mui/material";
 import { motion } from "framer-motion";
-import { 
-  Save, CheckCircle, XCircle, Undo2, CalendarDays, Filter 
-} from "lucide-react";  // ← much nicer icons than MUI defaults
+import { Save, CheckCircle, XCircle, Download } from "lucide-react";
+import * as XLSX from 'xlsx';
 
 export default function Attendance() {
-  const [year, setYear] = useState("");
+  const [year, setYear] = useState("FYBCA");
+  const [division, setDivision] = useState("A");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendance, setAttendance] = useState({});
 
-  const students = [
-    { id: 1, roll: "BCA101", name: "Rahul Sharma", batch: "2024" },
-    { id: 2, roll: "BCA102", name: "Aisha Verma", batch: "2024" },
-    { id: 3, roll: "BCA103", name: "Mohammed Asif", batch: "2024" },
-    // ... more realistic length
-  ];
+  // Dynamically generate 15 students for every Year/Division combination
+  const generateStudents = () => {
+    const years = ["FYBCA", "SYBCA", "TYBCA"];
+    const divisions = ["A", "B"];
+    let studentList = [];
+    let idCounter = 1;
+
+    years.forEach((y) => {
+      divisions.forEach((div) => {
+        for (let i = 1; i <= 15; i++) {
+          studentList.push({
+            id: idCounter++,
+            roll: `${y.charAt(0)}${div}${String(i).padStart(2, '0')}`,
+            name: `Student ${idCounter - 1}`,
+            batch: y,
+            division: div
+          });
+        }
+      });
+    });
+    return studentList;
+  };
+
+  const allStudents = generateStudents();
+
+  // Filter based on Year AND Division
+  const filteredStudents = allStudents.filter(
+    (s) => s.batch === year && s.division === division
+  );
 
   const toggleAttendance = (id, status) => {
     setAttendance(prev => ({
@@ -29,234 +52,120 @@ export default function Attendance() {
     }));
   };
 
-  const getStatusColor = (status) => {
-    if (status === "P") return { bg: "#dcfce7", text: "#166534", border: "#86efac" };
-    if (status === "A") return { bg: "#fee2e2", text: "#991b1b", border: "#fca5a5" };
-    return { bg: "transparent", text: "#6b7280", border: "#d1d5db" };
+  const downloadExcel = () => {
+    const data = filteredStudents.map(student => ({
+      "Roll No": student.roll,
+      "Student Name": student.name,
+      "Year": student.batch,
+      "Division": student.division,
+      "Date": selectedDate,
+      "Status": attendance[student.id] === "P" ? "Present" : attendance[student.id] === "A" ? "Absent" : "Not Marked"
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
+    XLSX.writeFile(workbook, `Attendance_${year}_Div${division}_${selectedDate}.xlsx`);
   };
 
   return (
-    <Box sx={{ 
-      minHeight: "100vh", 
-      bgcolor: "#f8fafc",
-      background: "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)"
-    }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "#f8fafc" }}>
       <Navbar />
-
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          {/* Header */}
-          <Stack 
-            direction={{ xs: "column", sm: "row" }} 
-            justifyContent="space-between" 
-            alignItems={{ xs: "flex-start", sm: "center" }}
-            spacing={3}
-            mb={4}
-          >
+      <Container maxWidth="xl" sx={{ py: 4, pt: 12 }}>
+        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+          
+          <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" alignItems="center" spacing={3} mb={4}>
             <Box>
-              <Typography 
-                variant="h4" 
-                fontWeight={800} 
-                color="text.primary"
-                letterSpacing={-0.5}
-                sx={{ background: "linear-gradient(90deg, #1e293b 0%, #334155 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
-              >
-                Attendance
-              </Typography>
-              <Typography variant="body2" color="text.secondary" mt={0.5}>
-                Mark and manage student attendance • {new Date().toLocaleDateString()}
+              <Typography variant="h4" fontWeight={800}>Attendance Marking</Typography>
+              <Typography variant="body2" color="text.secondary">
+                Select Year and Division to manage daily attendance
               </Typography>
             </Box>
 
             <Stack direction="row" spacing={2}>
-              <Button
-                variant="outlined"
-                color="inherit"
-                startIcon={<Undo2 size={18} />}
-                onClick={() => setAttendance({})}
-                sx={{ borderRadius: 2 }}
+              <Button 
+                variant="outlined" 
+                startIcon={<Download size={18} />} 
+                onClick={downloadExcel}
+                sx={{ borderRadius: 2, textTransform: 'none' }}
               >
-                Reset
+                Download Report
               </Button>
-              
-              <Button
-                variant="contained"
-                startIcon={<Save size={18} />}
-                sx={{ 
-                  borderRadius: 2,
-                  background: "linear-gradient(90deg, #0f172a 0%, #1e293b 100%)",
-                  boxShadow: "0 4px 14px rgba(15,23,42,0.18)",
-                  "&:hover": { 
-                    background: "linear-gradient(90deg, #1e293b 0%, #334155 100%)",
-                    transform: "translateY(-1px)",
-                    boxShadow: "0 8px 24px rgba(15,23,42,0.22)"
-                  },
-                  transition: "all 0.2s"
-                }}
-              >
-                Save Attendance
+              <Button variant="contained" startIcon={<Save size={18} />} sx={{ borderRadius: 2, bgcolor: "#0f172a", textTransform: 'none' }}>
+                Save Records
               </Button>
             </Stack>
           </Stack>
 
-          {/* Filters – nicer layout */}
-          <Paper 
-            elevation={0}
-            sx={{ 
-              p: 3, 
-              mb: 4, 
-              borderRadius: 3, 
-              border: "1px solid",
-              borderColor: "divider",
-              background: "rgba(255,255,255,0.65)",
-              backdropFilter: "blur(12px)",
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 2,
-              alignItems: "center"
-            }}
-          >
-            <FormControl size="small" sx={{ minWidth: 140 }}>
-              <InputLabel>Year</InputLabel>
-              <Select
-                value={year}
-                label="Year"
-                onChange={(e) => setYear(e.target.value)}
-              >
-                <MenuItem value="">All Years</MenuItem>
-                <MenuItem value="1">1st Year</MenuItem>
-                <MenuItem value="2">2nd Year</MenuItem>
-                <MenuItem value="3">3rd Year</MenuItem>
-              </Select>
-            </FormControl>
+          {/* FILTERS */}
+          <Paper elevation={0} sx={{ p: 3, mb: 4, borderRadius: 3, border: "1px solid #e2e8f0", background: "white" }}>
+            <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+                <FormControl size="small" sx={{ minWidth: 140 }}>
+                  <InputLabel>Year</InputLabel>
+                  <Select value={year} label="Year" onChange={(e) => setYear(e.target.value)}>
+                      <MenuItem value="FYBCA">FYBCA</MenuItem>
+                      <MenuItem value="SYBCA">SYBCA</MenuItem>
+                      <MenuItem value="TYBCA">TYBCA</MenuItem>
+                  </Select>
+                </FormControl>
 
-            <TextField
-              label="Date"
-              type="date"
-              size="small"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              sx={{ width: 160 }}
-            />
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <InputLabel>Division</InputLabel>
+                  <Select value={division} label="Division" onChange={(e) => setDivision(e.target.value)}>
+                      <MenuItem value="A">Division A</MenuItem>
+                      <MenuItem value="B">Division B</MenuItem>
+                  </Select>
+                </FormControl>
 
-            <Tooltip title="More filters coming soon...">
-              <IconButton color="primary" size="small">
-                <Filter size={20} />
-              </IconButton>
-            </Tooltip>
+                <TextField
+                  type="date"
+                  size="small"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  sx={{ width: 180 }}
+                />
+            </Stack>
           </Paper>
 
-          {/* Table – modern card-like rows */}
-          <Paper 
-            elevation={0}
-            sx={{ 
-              borderRadius: 3, 
-              overflow: "hidden",
-              border: "1px solid",
-              borderColor: "divider",
-              background: "white",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.06)"
-            }}
-          >
-            <Table sx={{ minWidth: 650 }}>
-              <TableHead>
-                <TableRow sx={{ bgcolor: "grey.50" }}>
-                  <TableCell width={100} sx={{ fontWeight: 700, color: "text.primary" }}>Roll No</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: "text.primary" }}>Student Name</TableCell>
-                  <TableCell width={120} sx={{ fontWeight: 700, color: "text.primary" }}>Batch</TableCell>
-                  <TableCell align="center" width={280} sx={{ fontWeight: 700, color: "text.primary" }}>
-                    Attendance
-                  </TableCell>
+          <Paper elevation={0} sx={{ borderRadius: 3, overflow: "hidden", border: "1px solid #e2e8f0", bgcolor: "white" }}>
+            <Table>
+              <TableHead sx={{ bgcolor: "#f8fafc" }}>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 700 }}>Roll No</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Student Name</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Class</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700 }}>Action</TableCell>
                 </TableRow>
               </TableHead>
-
               <TableBody>
-                {students.map((student) => {
+                {filteredStudents.map((student) => {
                   const status = attendance[student.id];
-                  const colors = getStatusColor(status);
-
                   return (
-                    <TableRow 
-                      key={student.id}
-                      hover
-                      sx={{ 
-                        transition: "all 0.15s",
-                        "&:hover": { bgcolor: "grey.50" }
-                      }}
-                    >
-                      <TableCell sx={{ fontFamily: "monospace", fontWeight: 600, color: "text.secondary" }}>
-                        {student.roll}
-                      </TableCell>
-
+                    <TableRow key={student.id} hover>
+                      <TableCell sx={{ fontWeight: 600, color: "#475569" }}>{student.roll}</TableCell>
+                      <TableCell><Typography fontWeight={600}>{student.name}</Typography></TableCell>
                       <TableCell>
-                        <Typography variant="subtitle1" fontWeight={600}>
-                          {student.name}
-                        </Typography>
+                        <Chip label={`${student.batch} - ${student.division}`} size="small" variant="outlined" />
                       </TableCell>
-
-                      <TableCell>
-                        <Chip 
-                          label={student.batch} 
-                          size="small"
-                          sx={{ 
-                            fontWeight: 600,
-                            bgcolor: "grey.200",
-                            color: "text.primary"
-                          }}
-                        />
-                      </TableCell>
-
                       <TableCell align="center">
-                        <Stack direction="row" spacing={1.5} justifyContent="center">
+                        <Stack direction="row" spacing={1} justifyContent="center">
                           <Button
                             size="small"
-                            variant="outlined"
+                            variant={status === "P" ? "contained" : "outlined"}
                             onClick={() => toggleAttendance(student.id, "P")}
-                            sx={{ 
-                              minWidth: 100,
-                              borderRadius: 20,
-                              borderColor: colors.border,
-                              bgcolor: status === "P" ? colors.bg : "transparent",
-                              color: status === "P" ? colors.text : "text.secondary",
-                              fontWeight: status === "P" ? 700 : 500,
-                              "&:hover": {
-                                bgcolor: colors.bg,
-                                borderColor: colors.border,
-                                color: colors.text,
-                                transform: "scale(1.04)"
-                              },
-                              transition: "all 0.18s"
-                            }}
-                            startIcon={status === "P" ? <CheckCircle size={16} /> : null}
+                            color="success"
+                            sx={{ borderRadius: 5, minWidth: 100, textTransform: 'none' }}
+                            startIcon={status === "P" ? <CheckCircle size={14} /> : null}
                           >
                             Present
                           </Button>
-
                           <Button
                             size="small"
-                            variant="outlined"
+                            variant={status === "A" ? "contained" : "outlined"}
                             onClick={() => toggleAttendance(student.id, "A")}
-                            sx={{ 
-                              minWidth: 100,
-                              borderRadius: 20,
-                              borderColor: colors.border,
-                              bgcolor: status === "A" ? colors.bg : "transparent",
-                              color: status === "A" ? colors.text : "text.secondary",
-                              fontWeight: status === "A" ? 700 : 500,
-                              "&:hover": {
-                                bgcolor: colors.bg,
-                                borderColor: colors.border,
-                                color: colors.text,
-                                transform: "scale(1.04)"
-                              },
-                              transition: "all 0.18s"
-                            }}
-                            startIcon={status === "A" ? <XCircle size={16} /> : null}
+                            color="error"
+                            sx={{ borderRadius: 5, minWidth: 100, textTransform: 'none' }}
+                            startIcon={status === "A" ? <XCircle size={14} /> : null}
                           >
                             Absent
                           </Button>
@@ -268,15 +177,6 @@ export default function Attendance() {
               </TableBody>
             </Table>
           </Paper>
-
-          {/* Quick status summary */}
-          {Object.keys(attendance).length > 0 && (
-            <Box mt={3} textAlign="right">
-              <Typography variant="body2" color="text.secondary">
-                Marked: {Object.keys(attendance).length} of {students.length} students
-              </Typography>
-            </Box>
-          )}
         </motion.div>
       </Container>
     </Box>
