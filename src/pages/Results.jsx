@@ -19,7 +19,7 @@ export default function AdvancedAcademicPortal() {
   const [students] = useState([
     { id: 1, roll: "BCA26-001", name: "Rahul Sharma", year: "FYBCA", div: "A", colors: ["#6366f1", "#4338ca"] },
     { id: 2, roll: "BCA26-002", name: "Aisha Verma", year: "FYBCA", div: "B", colors: ["#ec4899", "#be185d"] },
-    { id: 3, roll: "BCA26-003", name: "Mohammed Asif", year: "SYBCA", div: "A", colors: ["#10b981", "#047857"] },
+    { id: 3, roll: "2305118", name: "Mohammed Ashif", year: "TYBCA", div: "B", colors: ["#10b981", "#047857"] },
     { id: 4, roll: "BCA26-004", name: "Priya Das", year: "SYBCA", div: "B", colors: ["#f59e0b", "#b45309"] },
     { id: 5, roll: "BCA26-005", name: "Kevin Peter", year: "TYBCA", div: "A", colors: ["#3b82f6", "#1d4ed8"] },
     { id: 6, roll: "BCA26-006", name: "Ishita Rao", year: "TYBCA", div: "B", colors: ["#8b5cf6", "#6d28d9"] },
@@ -211,7 +211,6 @@ export default function AdvancedAcademicPortal() {
 
                 {/* Watermark */}
                 <Typography sx={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%) rotate(-45deg)", opacity: 0.05, fontSize: "80px", fontWeight: 900, pointerEvents: "none", width: "100%", textAlign: "center" }}>
-                   OFFICIAL TRANSCRIPT
                 </Typography>
               </Box>
             </Box>
