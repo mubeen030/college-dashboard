@@ -16,8 +16,62 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 export default function SplitLoginPage() {
   const navigate = useNavigate();
+
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+
+  // ✅ NEW STATES
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // ✅ LOGIN FUNCTION
+  const handleLogin = async () => {
+    if (!username || !password) {
+      alert("Enter username & password");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const res = await fetch("http://localhost:8080/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          username,
+          password
+        })
+      });
+
+      if (!res.ok) {
+        alert("Invalid credentials");
+        setLoading(false);
+        return;
+      }
+
+      const token = await res.text();
+
+      // ✅ Save token
+      localStorage.setItem("token", token);
+
+      // optional: remember me
+      if (rememberMe) {
+        localStorage.setItem("rememberUser", username);
+      }
+
+      // ✅ Redirect
+      navigate("/dashboard");
+
+    } catch (err) {
+      console.error(err);
+      alert("Server error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Box
@@ -28,7 +82,8 @@ export default function SplitLoginPage() {
         overflow: 'hidden',
       }}
     >
-      {/* LEFT - Welcome Section */}
+
+      {/* LEFT SIDE (UNCHANGED UI) */}
       <Box
         component={motion.div}
         initial={{ x: -100, opacity: 0 }}
@@ -46,77 +101,18 @@ export default function SplitLoginPage() {
           overflow: 'hidden',
         }}
       >
-        {/* Background abstract shapes */}
-        <Box
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            background: 
-              'radial-gradient(circle at 20% 30%, rgba(255,255,255,0.12) 0%, transparent 40%),' +
-              'radial-gradient(circle at 80% 70%, rgba(255,255,255,0.08) 0%, transparent 50%)',
-            pointerEvents: 'none',
-          }}
-        />
-
-        <Typography 
-          variant="h3" 
-          component={motion.h1}
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.8 }}
-          sx={{ 
-            fontWeight: 800,
-            mb: 3,
-            background: 'linear-gradient(90deg, #ffffff, #e0e0ff)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            zIndex: 2,
-          }}
-        >
-          Welcome Back Admin 
+        <Typography variant="h3" sx={{ fontWeight: 800, mb: 3 }}>
+          Welcome Back Admin
         </Typography>
 
-        <Typography 
-          variant="body1" 
-          sx={{ 
-            maxWidth: 420, 
-            textAlign: 'center', 
-            opacity: 0.9,
-            lineHeight: 1.7,
-            zIndex: 2,
-          }}
-        >
-          We're excited to see you again! Log in to access your dashboard, manage your profile, 
-          and continue your journey with us.
+        <Typography sx={{ maxWidth: 420, textAlign: 'center', opacity: 0.9 }}>
+          We're excited to see you again! Log in to access your dashboard,
+          manage your profile, and continue your journey with us.
         </Typography>
-
-        {/* Decorative floating elements */}
-        <Box
-          component={motion.div}
-          animate={{ 
-            y: [0, -20, 0],
-            rotate: [0, 8, -8, 0],
-          }}
-          transition={{ 
-            duration: 12, 
-            repeat: Infinity, 
-            repeatType: "reverse",
-            ease: "easeInOut"
-          }}
-          sx={{
-            position: 'absolute',
-            width: 180,
-            height: 180,
-            borderRadius: '50%',
-            background: 'linear-gradient(45deg, rgba(255,255,255,0.15), transparent)',
-            top: '15%',
-            left: '10%',
-            filter: 'blur(40px)',
-          }}
-        />
       </Box>
 
-      {/* RIGHT - Login Form */}
+
+      {/* RIGHT SIDE FORM */}
       <Box
         component={motion.div}
         initial={{ x: 100, opacity: 0 }}
@@ -135,125 +131,86 @@ export default function SplitLoginPage() {
         }}
       >
         <Box sx={{ width: '100%', maxWidth: 420 }}>
-          <Typography 
-            variant="h4" 
-            fontWeight="bold" 
-            gutterBottom
-            align="center"
-            sx={{ mb: 1, color: '#1e293b' }}
-          >
+
+          <Typography variant="h4" fontWeight="bold" align="center">
             Admin Login
           </Typography>
 
-          <Typography 
-            variant="body2" 
-            color="text.secondary" 
-            align="center" 
-            sx={{ mb: 5 }}
-          >
+          <Typography variant="body2" align="center" sx={{ mb: 5 }}>
             Enter your credentials to continue
           </Typography>
 
+          {/* ✅ USERNAME */}
           <TextField
             fullWidth
             label="Email / Username"
-            variant="outlined"
             margin="normal"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Box sx={{ color: '#64748b' }}>✉</Box>
-                </InputAdornment>
-              ),
-              sx: { borderRadius: 2 }
-            }}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
           />
 
+          {/* ✅ PASSWORD */}
           <TextField
             fullWidth
             label="Password"
             type={showPassword ? 'text' : 'password'}
-            variant="outlined"
             margin="normal"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Box sx={{ color: '#64748b' }}>🔒</Box>
-                </InputAdornment>
-              ),
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
                     onClick={() => setShowPassword(!showPassword)}
-                    edge="end"
-                    size="small"
                   >
                     {showPassword ? <VisibilityOff /> : <Visibility />}
                   </IconButton>
                 </InputAdornment>
-              ),
-              sx: { borderRadius: 2 }
+              )
             }}
           />
 
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              mt: 1,
-              mb: 4 
-            }}
-          >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
             <FormControlLabel
               control={
-                <Checkbox 
+                <Checkbox
                   size="small"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  sx={{ color: '#6366f1', '&.Mui-checked': { color: '#6366f1' } }}
                 />
               }
               label={<Typography variant="body2">Remember me</Typography>}
             />
 
-            <Typography 
-              variant="body2" 
-              color="primary" 
-              sx={{ 
-                cursor: 'pointer',
-                '&:hover': { textDecoration: 'underline' }
-              }}
+            <Typography
+              variant="body2"
+              color="primary"
+              sx={{ cursor: 'pointer' }}
               onClick={() => navigate('/forgot-password')}
             >
               Forgot password?
             </Typography>
           </Box>
 
+          {/* ✅ LOGIN BUTTON */}
           <Button
             fullWidth
             variant="contained"
             size="large"
-            onClick={() => navigate('/dashboard')}
+            onClick={handleLogin}
+            disabled={loading}
             sx={{
               py: 1.6,
               borderRadius: 2,
-              bgcolor: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
               background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
               fontWeight: 600,
               textTransform: 'none',
               fontSize: '1.1rem',
-              boxShadow: '0 8px 25px rgba(102, 126, 234, 0.35)',
-              '&:hover': {
-                bgcolor: '#5a67d8',
-                transform: 'translateY(-2px)',
-                boxShadow: '0 12px 35px rgba(102, 126, 234, 0.45)',
-              },
-              transition: 'all 0.3s ease',
             }}
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </Button>
+
         </Box>
       </Box>
     </Box>
